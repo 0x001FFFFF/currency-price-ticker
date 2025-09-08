@@ -1,0 +1,190 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: 'Currency Price Ticker API'
+            description: 'A high-performance Symfony application for tracking and providing cryptocurrency exchange rate data with automatic updates every 5 minutes via the Binance API.'
+            version: '1.0.0'
+            license:
+                name: 'MIT'
+                url: 'https://opensource.org/licenses/MIT'
+        servers:
+            - url: 'http://localhost:8080'
+              description: 'Local development server'
+        tags:
+            - name: 'Currency Rates'
+              description: 'Operations for retrieving cryptocurrency exchange rates'
+            - name: 'Health Check'
+              description: 'System health monitoring endpoints'
+        paths: []
+        components:
+            schemas:
+                Error:
+                    type: object
+                    properties:
+                        error_code:
+                            type: string
+                            description: 'Machine-readable error code'
+                            example: 'INVALID_CURRENCY_PAIR'
+                        message:
+                            type: string
+                            description: 'Human-readable error message'
+                            example: 'Currency pair "USD/BTC" is not supported. Allowed: EUR/BTC, EUR/ETH, EUR/LTC'
+                        status_code:
+                            type: integer
+                            description: 'HTTP status code'
+                            example: 400
+                        timestamp:
+                            type: string
+                            format: date-time
+                            description: 'Error occurrence timestamp in ISO 8601 format'
+                            example: '2025-09-08T10:30:00Z'
+                CurrencyRate:
+                    type: object
+                    properties:
+                        pair:
+                            type: string
+                            description: 'Currency pair in format BASE/QUOTE'
+                            example: 'EUR/BTC'
+                            enum: ['EUR/BTC', 'EUR/ETH', 'EUR/LTC']
+                        rate:
+                            type: number
+                            format: float
+                            description: 'Exchange rate value'
+                            example: 45678.90
+                            minimum: 0
+                        timestamp:
+                            type: string
+                            format: date-time
+                            description: 'Rate timestamp in ISO 8601 format (RFC 3339)'
+                            example: '2025-09-08T10:30:00Z'
+                    required: ['pair', 'rate', 'timestamp']
+                CurrencyRatesResponse:
+                    type: object
+                    properties:
+                        data:
+                            type: array
+                            description: 'Array of currency rate objects'
+                            items:
+                                $ref: '#/components/schemas/CurrencyRate'
+                        meta:
+                            type: object
+                            properties:
+                                pair:
+                                    type: string
+                                    description: 'Requested currency pair'
+                                    example: 'EUR/BTC'
+                                period:
+                                    type: string
+                                    description: 'Data period'
+                                    example: '24h'
+                                    enum: ['24h', 'day']
+                                count:
+                                    type: integer
+                                    description: 'Number of data points returned'
+                                    example: 288
+                                    minimum: 0
+                                start_time:
+                                    type: string
+                                    format: date-time
+                                    description: 'Start of the data period'
+                                    example: '2025-09-07T10:30:00Z'
+                                    nullable: true
+                                end_time:
+                                    type: string
+                                    format: date-time
+                                    description: 'End of the data period'
+                                    example: '2025-09-08T10:30:00Z'
+                                    nullable: true
+                            required: ['pair', 'period', 'count']
+                    required: ['data', 'meta']
+            responses:
+                BadRequestError:
+                    description: 'Bad Request - Invalid parameters'
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            examples:
+                                invalid_currency_pair:
+                                    summary: 'Invalid currency pair'
+                                    value:
+                                        error_code: 'INVALID_CURRENCY_PAIR'
+                                        message: 'Currency pair "USD/BTC" is not supported. Allowed: EUR/BTC, EUR/ETH, EUR/LTC'
+                                        status_code: 400
+                                        timestamp: '2025-09-08T10:30:00Z'
+                                invalid_date_format:
+                                    summary: 'Invalid date format'
+                                    value:
+                                        error_code: 'VALIDATION_ERROR'
+                                        message: 'Date must be in format Y-m-d'
+                                        status_code: 400
+                                        timestamp: '2025-09-08T10:30:00Z'
+                                future_date:
+                                    summary: 'Future date not allowed'
+                                    value:
+                                        error_code: 'VALIDATION_ERROR'
+                                        message: 'Date cannot be in the future'
+                                        status_code: 400
+                                        timestamp: '2025-09-08T10:30:00Z'
+                NotFoundError:
+                    description: 'Not Found - No data available for the requested period'
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            example:
+                                error_code: 'NO_DATA_FOUND'
+                                message: 'No data found for pair "EUR/BTC" in period "last 24 hours"'
+                                status_code: 404
+                                timestamp: '2025-09-08T10:30:00Z'
+                RateLimitError:
+                    description: 'Too Many Requests - Rate limit exceeded'
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            example:
+                                error_code: 'RATE_LIMIT_EXCEEDED'
+                                message: 'Rate limit exceeded. Please try again later.'
+                                status_code: 429
+                                timestamp: '2025-09-08T10:30:00Z'
+                    headers:
+                        Retry-After:
+                            description: 'Number of seconds to wait before retrying'
+                            schema:
+                                type: integer
+                                example: 60
+                InternalServerError:
+                    description: 'Internal Server Error - Unexpected server error'
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                            example:
+                                error_code: 'INTERNAL_ERROR'
+                                message: 'An error occurred while processing your request'
+                                status_code: 500
+                                timestamp: '2025-09-08T10:30:00Z'
+            parameters:
+                CurrencyPair:
+                    name: pair
+                    in: query
+                    required: true
+                    description: 'Currency pair in format BASE/QUOTE'
+                    schema:
+                        type: string
+                        enum: ['EUR/BTC', 'EUR/ETH', 'EUR/LTC']
+                    example: 'EUR/BTC'
+                DateParameter:
+                    name: date
+                    in: query
+                    required: true
+                    description: 'Date in YYYY-MM-DD format (no future dates allowed)'
+                    schema:
+                        type: string
+                        format: date
+                        pattern: '^\d{4}-\d{2}-\d{2}$'
+                    example: '2025-09-07'
+    areas:
+        path_patterns:
+            - ^/api(?!/doc$) # Include all /api paths except /api/doc

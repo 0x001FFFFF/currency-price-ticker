@@ -1,0 +1,10 @@
+framework:
+    rate_limiter:
+        api_requests:
+            policy: 'sliding_window'
+            limit: 100
+            interval: '1 minute'
+        api_burst:
+            policy: 'fixed_window'
+            limit: 10
+            interval: '10 seconds'

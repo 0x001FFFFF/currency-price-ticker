@@ -1,0 +1,62 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    app.supported_currency_pairs: ['EUR/BTC', 'EUR/ETH', 'EUR/LTC']
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    # Repository interface binding
+    App\Domain\CurrencyRate\Repository\CurrencyRateRepositoryInterface:
+        class: App\Infrastructure\Repository\CurrencyRateRepository
+
+    # API Exception Listener
+    App\EventListener\ApiExceptionListener:
+        arguments:
+            $debugMode: '%kernel.debug%'
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
+
+    # Rate limit listener
+    App\EventListener\RateLimitListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: 255 }
+
+    # Rate limiter factory alias (uses framework.rate_limiter.api_requests)
+    Symfony\Component\RateLimiter\RateLimiterFactory $apiRateLimiterFactory: '@limiter.api_requests'
+
+    # Explicit Redis cache pool for currency rates
+    cache.connection.currency_rates:
+        class: Redis
+        factory: ['Symfony\Component\Cache\Adapter\RedisAdapter', 'createConnection']
+        arguments: ['redis://redis:6379/1']
+
+    cache.pool.currency_rates:
+        class: Symfony\Component\Cache\Adapter\RedisAdapter
+        arguments:
+            - '@cache.connection.currency_rates'
+            - 'currency_rates'
+            - '30'
+
+    App\Infrastructure\Cache\CurrencyRateCacheService:
+        arguments:
+            $cache: '@cache.pool.currency_rates'
+
+    # Support currencies validation constraint
+    App\Application\Validation\Validator\SupportedCurrencyPairValidator:
+        arguments:
+            $supportedPairs: '%app.supported_currency_pairs%'
+        tags: [ 'validator.constraint_validator' ]
+

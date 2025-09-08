@@ -1,0 +1,134 @@
+services:
+  app:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: currency-ticker-app
+    restart: unless-stopped
+    volumes:
+      # Mount only necessary directories for development
+      - ./src:/var/www/html/src:cached
+      - ./bin:/var/www/html/bin:cached
+      - ./config:/var/www/html/config:cached
+      - ./public:/var/www/html/public:cached
+      - ./migrations:/var/www/html/migrations:cached
+      - ./tests:/var/www/html/tests:cached
+      - ./phpunit.dist.xml:/var/www/html/phpunit.xml:cached
+      - ./.env:/var/www/html/.env:cached
+      - ./.env.dev:/var/www/html/.env.dev:cached
+      - ./.env.test:/var/www/html/.env.test:cached
+      - ./phpstan.neon:/var/www/html/phpstan.neon:cached
+      - ./.php-cs-fixer.php:/var/www/html/.php-cs-fixer.php:cached
+      - ./var/log:/var/www/html/var/log
+      - ./var/cache:/var/www/html/var/cache
+    environment:
+      - APP_ENV=dev
+      - APP_DEBUG=1
+      - DATABASE_URL=mysql://currency_user:currency_pass@db:3306/currency_ticker?serverVersion=8.0
+      - REDIS_URL=redis://redis:6379
+      - MESSENGER_TRANSPORT_DSN=redis://redis:6379/messages
+      - SENTRY_DSN=https://f242760c1ec9dc937c51cb7eb1f55739@o4509978677149696.ingest.de.sentry.io/4509978681147472
+      - PHP_IDE_CONFIG=serverName=currency-ticker-app
+    depends_on:
+      - db
+      - redis
+    networks:
+      - currency-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "9011:9007"
+
+  nginx:
+    image: nginx:alpine
+    container_name: currency-ticker-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./public:/var/www/html/public:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - currency-network
+
+  db:
+    image: mysql:8.0
+    container_name: currency-ticker-db
+    restart: unless-stopped
+    ports:
+      - "3310:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: currency_ticker
+      MYSQL_USER: currency_user
+      MYSQL_PASSWORD: currency_pass
+    volumes:
+      - db_data_price_ticker:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - currency-network
+
+  redis:
+    image: redis:alpine
+    container_name: currency-ticker-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - currency-network
+
+  scheduler:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: currency-ticker-scheduler
+    restart: unless-stopped
+    volumes:
+      - ./src:/var/www/html/src:cached
+      - ./bin:/var/www/html/bin:cached
+      - ./config:/var/www/html/config:cached
+      - ./migrations:/var/www/html/migrations:cached
+      - ./.env:/var/www/html/.env:cached
+      - ./.env.dev:/var/www/html/.env.dev:cached
+      - ./.env.test:/var/www/html/.env.test:cached
+      - ./phpstan.neon:/var/www/html/phpstan.neon:cached
+      - ./.php-cs-fixer.php:/var/www/html/.php-cs-fixer.php:cached
+      - ./var/log:/var/www/html/var/log
+      - ./var/cache:/var/www/html/var/cache
+    environment:
+      - APP_ENV=dev
+      - DATABASE_URL=mysql://currency_user:currency_pass@db:3306/currency_ticker?serverVersion=8.0
+      - REDIS_URL=redis://redis:6379
+      - MESSENGER_TRANSPORT_DSN=redis://redis:6379/messages
+      - SENTRY_DSN=https://f242760c1ec9dc937c51cb7eb1f55739@o4509978677149696.ingest.de.sentry.io/4509978681147472
+      - PHP_IDE_CONFIG=serverName=currency-ticker-app
+    depends_on:
+      - db
+      - redis
+    command: sh -c "sleep 10 && php bin/console messenger:consume async --time-limit=3600 --memory-limit=128M --sleep=1"
+    networks:
+      - currency-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  db_data_price_ticker:
+    driver: local
+#  app_cache:
+#    driver: local
+#  app_logs:
+#    driver: local
+#  scheduler_cache:
+#    driver: local
+#  scheduler_logs:
+#    driver: local
+
+
+networks:
+  currency-network:
+    driver: bridge
