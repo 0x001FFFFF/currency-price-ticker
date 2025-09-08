@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\EventListener;
 
+use App\Exception\BusinessException;
 use App\Exception\CurrencyTickerException;
 use App\Exception\RateLimitExceededException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 final class ApiExceptionListener
@@ -17,14 +21,15 @@ final class ApiExceptionListener
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly bool $debugMode = false
-    ) {}
+    ) {
+    }
 
     public function onKernelException(ExceptionEvent $event): void
     {
         $exception = $event->getThrowable();
         $request = $event->getRequest();
 
-        if (!str_starts_with($request->getPathInfo(), '/api/')) {
+        if (! str_starts_with($request->getPathInfo(), '/api/')) {
             return;
         }
 
@@ -57,43 +62,57 @@ final class ApiExceptionListener
             return $response;
         }
 
-        if ($exception instanceof ValidationFailedException) {
-            return new JsonResponse([
-                'error_code' => 'VALIDATION_ERROR',
-                'message' => $exception->getViolations()->get(0)->getMessage(),
-                'status_code' => 400,
-            ], 400);
+        $response = new JsonResponse();
+        $responseData = [
+            'timestamp' => (new \DateTime())->format('c'),
+        ];
+
+        switch (true) {
+            case $exception instanceof ValidationFailedException:
+                $responseData['message'] = $exception->getViolations()->get(0)->getMessage();
+                $responseData['error_code'] = 'VALIDATION_ERROR';
+                $responseData['status_code'] = Response::HTTP_BAD_REQUEST;
+                $statusCode = Response::HTTP_BAD_REQUEST;
+
+                break;
+            case $exception instanceof HttpExceptionInterface:
+                $responseData['message'] = $exception->getMessage();
+                $responseData['error_code'] = 'HTTP_EXCEPTION';
+                $responseData['status_code'] = $exception->getStatusCode();
+                $statusCode = $exception->getStatusCode();
+
+                break;
+            case $exception instanceof MethodNotAllowedException:
+                $responseData['message'] = $exception->getMessage();
+                $responseData['error_code'] = 'METHOD_NOT_ALLOWED';
+                $responseData['status_code'] = Response::HTTP_METHOD_NOT_ALLOWED;
+                $statusCode = Response::HTTP_METHOD_NOT_ALLOWED;
+
+                break;
+            default:
+                $message = $this->debugMode
+                    ? $exception->getMessage()
+                    : 'An error occurred while processing your request';
+
+                $responseData['message'] = $message;
+                $responseData['error_code'] = 'INTERNAL_ERROR';
+                $responseData['status_code'] = Response::HTTP_INTERNAL_SERVER_ERROR;
+                $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR;
         }
 
-        if ($exception instanceof HttpExceptionInterface) {
-            return new JsonResponse([
-                'error_code' => 'HTTP_EXCEPTION',
-                'message' => $exception->getMessage(),
-                'status_code' => $exception->getStatusCode(),
-                'timestamp' => (new \DateTime())->format('c')
-            ], $exception->getStatusCode());
-        }
+        $response->setData($responseData);
+        $response->setStatusCode($statusCode);
 
-        // Generic error response
-        $message = $this->debugMode
-            ? $exception->getMessage()
-            : 'An error occurred while processing your request';
-
-        return new JsonResponse([
-            'error_code' => 'INTERNAL_ERROR',
-            'message' => $message,
-            'status_code' => 500,
-            'timestamp' => (new \DateTime())->format('c')
-        ], 500);
+        return $response;
     }
 
-    private function logException(\Throwable $exception, $request): void
+    private function logException(\Throwable $exception, Request $request): void
     {
         $context = [
             'exception' => $exception,
             'request_uri' => $request->getUri(),
             'client_ip' => $request->getClientIp(),
-            'user_agent' => $request->headers->get('User-Agent')
+            'user_agent' => $request->headers->get('User-Agent'),
         ];
 
         if ($exception instanceof CurrencyTickerException) {

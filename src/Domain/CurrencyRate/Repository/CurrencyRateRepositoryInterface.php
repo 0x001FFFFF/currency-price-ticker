@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Domain\CurrencyRate\Repository;
 
 use App\Domain\CurrencyRate\Entity\CurrencyRate;
-use App\Domain\CurrencyRate\ValueObject;
 
 interface CurrencyRateRepositoryInterface
 {

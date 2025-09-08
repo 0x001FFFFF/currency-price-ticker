@@ -18,7 +18,7 @@ final class RateLimitExceededException extends BusinessException
         parent::__construct('Rate limit exceeded. Please try again later.');
         $this->retryAfter = $retryAfter;
     }
-    
+
     public function getRetryAfter(): int
     {
         return $this->retryAfter;

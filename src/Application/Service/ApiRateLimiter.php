@@ -14,7 +14,8 @@ final class ApiRateLimiter
     public function __construct(
         private readonly RateLimiterFactory $apiRateLimiterFactory,
         private readonly LoggerInterface $logger
-    ) {}
+    ) {
+    }
 
     public function checkRateLimit(Request $request): void
     {
@@ -23,12 +24,12 @@ final class ApiRateLimiter
 
         $limit = $limiter->consume();
 
-        if (!$limit->isAccepted()) {
+        if (! $limit->isAccepted()) {
             $this->logger->warning('Rate limit exceeded', [
                 'client_ip' => $request->getClientIp(),
                 'user_agent' => $request->headers->get('User-Agent'),
                 'retry_after' => $limit->getRetryAfter()->getTimestamp(),
-                'route' => $request->attributes->get('_route')
+                'route' => $request->attributes->get('_route'),
             ]);
 
             throw new RateLimitExceededException(
@@ -45,5 +46,3 @@ final class ApiRateLimiter
         return \hash('sha256', $ip . '|' . $userAgent);
     }
 }
-
-

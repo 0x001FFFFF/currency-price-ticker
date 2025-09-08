@@ -27,7 +27,6 @@ final class GetDailyRatesRequest
             example: 'EUR/BTC'
         )]
         public string $pair = '',
-
         #[Assert\NotBlank(message: 'Date is required')]
         #[Assert\Date(message: 'Date must be in format Y-m-d')]
         #[Assert\LessThanOrEqual('today', message: 'Date cannot be in the future')]

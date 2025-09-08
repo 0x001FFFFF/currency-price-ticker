@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Application\Query;
@@ -10,8 +11,6 @@ use App\Infrastructure\Cache\CurrencyRateCacheService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
-// use fully-qualified core functions for static analysis
-
 #[AsMessageHandler]
 final class GetDailyRatesHandler
 {
@@ -19,8 +18,10 @@ final class GetDailyRatesHandler
         private readonly CurrencyRateRepositoryInterface $repository,
         private readonly LoggerInterface $logger,
         private readonly CurrencyRateCacheService $cacheService
-    ) {}
+    ) {
+    }
 
+    /** @return array<\App\Domain\CurrencyRate\Entity\CurrencyRate> */
     public function __invoke(GetDailyRatesQuery $query): array
     {
         $pair = new CurrencyPair(...\explode('/', $query->pair));
@@ -43,7 +44,7 @@ final class GetDailyRatesHandler
         $this->logger->info('Retrieved daily rates', [
             'pair' => $query->pair,
             'date' => $query->date,
-            'count' => \count($rates)
+            'count' => \count($rates),
         ]);
 
         $this->cacheService->cacheRates($cacheKey, $rates);

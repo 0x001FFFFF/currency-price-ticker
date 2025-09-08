@@ -11,18 +11,17 @@ final class RateLimitListener
 {
     public function __construct(
         private readonly ApiRateLimiter $rateLimiter
-    ) {}
+    ) {
+    }
 
     public function onKernelRequest(RequestEvent $event): void
     {
         $request = $event->getRequest();
 
-        if (!\str_starts_with($request->getPathInfo(), '/api/')) {
+        if (! \str_starts_with($request->getPathInfo(), '/api/')) {
             return;
         }
 
         $this->rateLimiter->checkRateLimit($request);
     }
 }
-
-

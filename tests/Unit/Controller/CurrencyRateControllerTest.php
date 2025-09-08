@@ -2,14 +2,26 @@
 
 declare(strict_types=1);
 
-namespace Tests\Functional\Controller;
+namespace App\Tests\Unit\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 
-
 class CurrencyRateControllerTest extends WebTestCase
 {
+    protected $client;
+
+    protected function setUp(): void
+    {
+        $this->client = self::createClient();
+        parent::setUp();
+    }
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        $this->client = null;
+    }
+
     public function testLast24HoursReturnsValidDataStructure(): void
     {
         $response = $this->makeApiRequest('GET', '/api/rates/last-24h?pair=EUR/BTC');
@@ -41,22 +53,41 @@ class CurrencyRateControllerTest extends WebTestCase
     public function testInvalidCurrencyPairReturns400(): void
     {
         $response = $this->makeApiRequest('GET', '/api/rates/last-24h?pair=USD/BTC');
-
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+        $data = $this->getJsonResponseData($response);
+        $this->assertIsArray($data);
+        $this->assertNotEmpty($data['error_code']);
+        $this->assertSame('VALIDATION_ERROR', $data['error_code']);
+        $this->assertArrayHasKey('message', $data);
+        $this->assertNotEmpty($data['message']);
+        $this->assertArrayHasKey('status_code', $data);
+        $this->assertSame($data['status_code'], 400);
+        $this->assertArrayHasKey('timestamp', $data);
+        $this->assertIsString($data['timestamp']);
         $this->assertResponseStatusCodeSame(400);
     }
 
     public function testMissingParameterReturns400(): void
     {
         $response = $this->makeApiRequest('GET', '/api/rates/last-24h');
-
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+        $data = $this->getJsonResponseData($response);
+        $this->assertNotEmpty($data['error_code']);
+        $this->assertSame('VALIDATION_ERROR', $data['error_code']);
+        $this->assertArrayHasKey('message', $data);
+        $this->assertNotEmpty($data['message']);
+        $this->assertArrayHasKey('status_code', $data);
+        $this->assertSame($data['status_code'], 400);
+        $this->assertArrayHasKey('timestamp', $data);
+        $this->assertIsString($data['timestamp']);
         $this->assertResponseStatusCodeSame(400);
     }
 
     public function testDailyEndpointWithValidDate(): void
     {
         $date = (new \DateTime('-1 day'))->format('Y-m-d');
-
         $response = $this->makeApiRequest('GET', "/api/rates/day?pair=EUR/BTC&date={$date}");
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
         $data = $this->getJsonResponseData($response);
 
         if ($response->isSuccessful()) {
@@ -80,40 +111,34 @@ class CurrencyRateControllerTest extends WebTestCase
         $futureDate = (new \DateTime('+1 day'))->format('Y-m-d');
         $response = $this->makeApiRequest('GET', "/api/rates/day?pair=EUR/BTC&date={$futureDate}");
         $data = $this->getJsonResponseData($response);
-
-        if ($response->isSuccessful()) {
-            $this->assertResponseStatusCodeSame(400);
-        } else {
-            $this->assertIsArray($data);
-            $this->assertArrayHasKey('error_code', $data);
-            $this->assertNotEmpty($data['error_code']);
-            $this->assertArrayHasKey('message', $data);
-            $this->assertNotEmpty($data['message']);
-            $this->assertArrayHasKey('status_code', $data);
-            $this->assertIsInt($data['status_code']);
-            $this->assertArrayHasKey('timestamp', $data);
-            $this->assertIsString($data['timestamp']);
-        }
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('error_code', $data);
+        $this->assertNotEmpty($data['error_code']);
+        $this->assertArrayHasKey('message', $data);
+        $this->assertNotEmpty($data['message']);
+        $this->assertArrayHasKey('status_code', $data);
+        $this->assertIsInt($data['status_code']);
+        $this->assertArrayHasKey('timestamp', $data);
+        $this->assertIsString($data['timestamp']);
     }
 
-    private function makeApiRequest(string $method, string $uri): Response
+    protected function makeApiRequest(string $method, string $uri): Response
     {
-        $client = self::createClient();
-        $client->request($method, $uri);
-
-        return $client->getResponse();
+        $this->client->request($method, $uri);
+        return $this->client->getResponse();
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function getJsonResponseData(Response $response): array
+    protected function getJsonResponseData(Response $response): array
     {
         $content = $response->getContent();
         $this->assertNotFalse($content, 'Response content should not be false');
-        $this->assertJson($content, 'Response content should be valid JSON');;
+        $this->assertJson($content, 'Response content should be valid JSON');
         $data = json_decode($content, true);
         $this->assertIsArray($data, 'Response should be valid JSON');
+
         return $data;
     }
 }

@@ -15,8 +15,10 @@ final class CurrencyRateCacheService
     public function __construct(
         private readonly CacheItemPoolInterface $cache,
         private readonly LoggerInterface $logger
-    ) {}
+    ) {
+    }
 
+    /** @return array<\App\Domain\CurrencyRate\Entity\CurrencyRate>|null */
     public function getCachedRates(string $cacheKey): ?array
     {
         try {
@@ -24,8 +26,9 @@ final class CurrencyRateCacheService
 
             if ($item->isHit()) {
                 $this->logger->debug('Cache hit for rates', ['key' => $cacheKey]);
-                /** @var array|null $value */
+                /** @var array<\App\Domain\CurrencyRate\Entity\CurrencyRate>|null $value */
                 $value = $item->get();
+
                 return $value;
             }
 
@@ -33,13 +36,14 @@ final class CurrencyRateCacheService
         } catch (\Throwable $e) {
             $this->logger->warning('Cache retrieval failed', [
                 'key' => $cacheKey,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return null;
         }
     }
 
+    /** @param array<\App\Domain\CurrencyRate\Entity\CurrencyRate> $rates */
     public function cacheRates(string $cacheKey, array $rates): void
     {
         try {
@@ -52,12 +56,12 @@ final class CurrencyRateCacheService
             $this->logger->debug('Rates cached successfully', [
                 'key' => $cacheKey,
                 'count' => \count($rates),
-                'ttl' => self::CACHE_TTL
+                'ttl' => self::CACHE_TTL,
             ]);
         } catch (\Throwable $e) {
             $this->logger->warning('Cache storage failed', [
                 'key' => $cacheKey,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -73,5 +77,3 @@ final class CurrencyRateCacheService
         return \hash('md5', \implode('_', $keyParts));
     }
 }
-
-

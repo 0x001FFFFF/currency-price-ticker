@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Application\Query;
@@ -19,8 +20,10 @@ final class GetLast24HoursRatesHandler
         private readonly CurrencyRateRepositoryInterface $repository,
         private readonly LoggerInterface $logger,
         private readonly CurrencyRateCacheService $cacheService
-    ) {}
+    ) {
+    }
 
+    /** @return array<\App\Domain\CurrencyRate\Entity\CurrencyRate> */
     public function __invoke(GetLast24HoursRatesQuery $query): array
     {
         $pair = new CurrencyPair(...\explode('/', $query->pair));
@@ -41,7 +44,7 @@ final class GetLast24HoursRatesHandler
 
         $this->logger->info('Retrieved 24h rates', [
             'pair' => $query->pair,
-            'count' => \count($rates)
+            'count' => \count($rates),
         ]);
 
         $this->cacheService->cacheRates($cacheKey, $rates);

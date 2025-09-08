@@ -26,7 +26,6 @@ final readonly class CurrencyRateResponseDTO
             example: 'EUR/BTC'
         )]
         public string $pair,
-        
         #[OA\Property(
             property: 'rate',
             description: 'Exchange rate value',
@@ -36,7 +35,6 @@ final readonly class CurrencyRateResponseDTO
             example: 45678.90
         )]
         public float $rate,
-        
         #[OA\Property(
             property: 'timestamp',
             description: 'Rate timestamp in ISO 8601 format (RFC 3339)',
@@ -45,13 +43,14 @@ final readonly class CurrencyRateResponseDTO
             example: '2025-09-08T10:30:00Z'
         )]
         public string $timestamp
-    ) {}
+    ) {
+    }
 
     public static function fromEntity(\App\Domain\CurrencyRate\Entity\CurrencyRate $rate): self
     {
         return new self(
-            pair: $rate->getPair()->toString(),
-            rate: $rate->getRate()->getAmount(),
+            pair: $rate->getPair(),
+            rate: $rate->getRateAsFloat(),
             timestamp: $rate->getTimestamp()->format('c')
         );
     }

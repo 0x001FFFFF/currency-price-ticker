@@ -91,6 +91,7 @@ class CurrencyRate
     {
         $now = new \DateTimeImmutable();
         $diff = $now->getTimestamp() - $this->timestamp->getTimestamp();
+
         return $diff > $maxAgeSeconds;
     }
 }

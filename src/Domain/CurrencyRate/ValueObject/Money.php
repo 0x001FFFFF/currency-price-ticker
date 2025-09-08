@@ -15,28 +15,28 @@ final readonly class Money
     ) {
         $this->validate();
     }
-    
+
     public function getAmount(): float
     {
         return $this->amount;
     }
-    
+
     public function getCurrency(): string
     {
         return $this->currency;
     }
-    
+
     public static function fromString(string $amount, string $currency = 'EUR'): self
     {
         return new self((float) $amount, $currency);
     }
-    
+
     private function validate(): void
     {
         if ($this->amount < 0) {
             throw new \InvalidArgumentException('Amount cannot be negative');
         }
-        
+
         if (empty($this->currency)) {
             throw new \InvalidArgumentException('Currency is required');
         }

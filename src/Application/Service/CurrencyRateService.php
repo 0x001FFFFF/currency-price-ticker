@@ -13,7 +13,8 @@ class CurrencyRateService
     public function __construct(
         private readonly CurrencyRateRepositoryInterface $currencyRateRepository,
         private readonly LoggerInterface $logger
-    ) {}
+    ) {
+    }
 
     /**
      * @return array<string, mixed>
@@ -26,7 +27,7 @@ class CurrencyRateService
         $this->logger->info('Fetching last 24h rates', [
             'pair' => $pair,
             'start_time' => $startTime->format('c'),
-            'end_time' => $endTime->format('c')
+            'end_time' => $endTime->format('c'),
         ]);
 
         $rates = $this->currencyRateRepository->findByPairAndDateRange(
@@ -36,14 +37,14 @@ class CurrencyRateService
         );
 
         return [
-            'data' => array_map(fn(CurrencyRate $rate) => [
+            'data' => array_map(fn (CurrencyRate $rate) => [
                 'pair' => $rate->getPair(),
                 'rate' => $rate->getRate(),
-                'timestamp' => $rate->getTimestamp()->format('Y-m-d H:i:s')
+                'timestamp' => $rate->getTimestamp()->format('Y-m-d H:i:s'),
             ], $rates),
             'count' => count($rates),
             'start_time' => $rates ? $rates[0]->getTimestamp() : null,
-            'end_time' => $rates ? end($rates)->getTimestamp() : null
+            'end_time' => $rates ? end($rates)->getTimestamp() : null,
         ];
     }
 
@@ -53,7 +54,7 @@ class CurrencyRateService
     public function getDailyRates(string $pair, string $date): array
     {
         $targetDate = \DateTime::createFromFormat('Y-m-d', $date);
-        if (!$targetDate) {
+        if (! $targetDate) {
             throw new \InvalidArgumentException('Invalid date format. Expected Y-m-d');
         }
 
@@ -64,7 +65,7 @@ class CurrencyRateService
             'pair' => $pair,
             'date' => $date,
             'start_time' => $startTime->format('c'),
-            'end_time' => $endTime->format('c')
+            'end_time' => $endTime->format('c'),
         ]);
 
         $rates = $this->currencyRateRepository->findByPairAndDateRange(
@@ -74,14 +75,14 @@ class CurrencyRateService
         );
 
         return [
-            'data' => array_map(fn(CurrencyRate $rate) => [
+            'data' => array_map(fn (CurrencyRate $rate) => [
                 'pair' => $rate->getPair(),
                 'rate' => $rate->getRate(),
-                'timestamp' => $rate->getTimestamp()->format('Y-m-d H:i:s')
+                'timestamp' => $rate->getTimestamp()->format('Y-m-d H:i:s'),
             ], $rates),
             'count' => count($rates),
             'start_time' => $rates ? $rates[0]->getTimestamp() : null,
-            'end_time' => $rates ? end($rates)->getTimestamp() : null
+            'end_time' => $rates ? end($rates)->getTimestamp() : null,
         ];
     }
 }

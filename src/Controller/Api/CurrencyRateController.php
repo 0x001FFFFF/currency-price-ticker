@@ -6,8 +6,8 @@ namespace App\Controller\Api;
 
 use App\Application\Query\GetDailyRatesQuery;
 use App\Application\Query\GetLast24HoursRatesQuery;
-use App\DTO\Request\GetLast24HoursRatesRequest;
 use App\DTO\Request\GetDailyRatesRequest;
+use App\DTO\Request\GetLast24HoursRatesRequest;
 use App\DTO\Response\CurrencyRateResponseDTO;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -60,7 +60,8 @@ final class CurrencyRateController extends AbstractController
     public function getLast24Hours(
         // DTO is automatically created, populated, and validated by Symfony.
         // If validation fails, a 4xx response is sent automatically by the framework.
-        #[MapQueryString] GetLast24HoursRatesRequest $dto
+        #[MapQueryString]
+        GetLast24HoursRatesRequest $dto
     ): JsonResponse {
         $query = new GetLast24HoursRatesQuery($dto->pair);
 
@@ -69,14 +70,14 @@ final class CurrencyRateController extends AbstractController
         $rates = $this->handle($query);
 
         return $this->json([
-            'data' => \array_map(fn($rate) => CurrencyRateResponseDTO::fromEntity($rate)->toArray(), $rates),
+            'data' => \array_map(fn ($rate) => CurrencyRateResponseDTO::fromEntity($rate)->toArray(), $rates),
             'meta' => [
                 'pair' => $dto->pair,
                 'period' => '24h',
                 'count' => \count($rates),
                 'start_time' => $rates[0]?->getTimestamp()->format('c'),
-                'end_time' => \end($rates)?->getTimestamp()->format('c')
-            ]
+                'end_time' => \end($rates)?->getTimestamp()->format('c'),
+            ],
         ]);
     }
 
@@ -122,20 +123,21 @@ final class CurrencyRateController extends AbstractController
     #[OA\Response(ref: '#/components/responses/RateLimitError', response: 429)]
     #[OA\Response(ref: '#/components/responses/InternalServerError', response: 500)]
     public function getSpecificDay(
-        #[MapQueryString] GetDailyRatesRequest $dto
+        #[MapQueryString]
+        GetDailyRatesRequest $dto
     ): JsonResponse {
         $query = new GetDailyRatesQuery($dto->pair, $dto->date);
         $rates = $this->handle($query);
 
         return $this->json([
-            'data' => \array_map(fn($rate) => CurrencyRateResponseDTO::fromEntity($rate)->toArray(), $rates),
+            'data' => \array_map(fn ($rate) => CurrencyRateResponseDTO::fromEntity($rate)->toArray(), $rates),
             'meta' => [
                 'pair' => $dto->pair,
                 'period' => 'day',
                 'count' => \count($rates),
                 'start_time' => $rates[0]?->getTimestamp()->format('c'),
-                'end_time' => \end($rates)?->getTimestamp()->format('c')
-            ]
+                'end_time' => \end($rates)?->getTimestamp()->format('c'),
+            ],
         ]);
     }
 }
