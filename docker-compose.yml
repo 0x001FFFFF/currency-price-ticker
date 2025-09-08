@@ -68,7 +68,6 @@ services:
     volumes:
       - db_data_price_ticker:/var/lib/mysql
       - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
-      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
     networks:
       - currency-network
 

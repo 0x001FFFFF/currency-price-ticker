@@ -9,10 +9,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CurrencyRateRepository::class)]
-#[ORM\Table(
-    name: 'currency_rates',
-    uniqueConstraints: [new ORM\UniqueConstraint(name: 'uk_pair_timestamp', columns: ['pair', 'timestamp'])]
-)]
+#[ORM\Table(name: 'currency_rates')]
+#[ORM\UniqueConstraint(name: 'uk_pair_timestamp', columns: ['pair', 'timestamp'])]
 #[ORM\Index(columns: ['pair', 'timestamp'], name: 'idx_pair_timestamp')]
 #[ORM\Index(columns: ['timestamp'], name: 'idx_timestamp')]
 class CurrencyRate

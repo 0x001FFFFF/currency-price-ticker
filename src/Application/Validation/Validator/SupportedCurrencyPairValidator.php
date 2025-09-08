@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Validation\Validator;
 
 use App\Application\Validation\Constraint\SupportedCurrencyPair;
+use App\Exception\InvalidCurrencyPairException;
 use InvalidArgumentException;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;

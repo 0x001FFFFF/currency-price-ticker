@@ -15,7 +15,7 @@ final class InvalidCurrencyPairException extends BusinessException
     {
         parent::__construct(
             sprintf(
-                'Currency pair "%s" is not supported. Allowed: EUR/BTC, EUR/ETH, EUR/LTC',
+                'Currency pair "%s" is not supported',
                 $pair
             )
         );

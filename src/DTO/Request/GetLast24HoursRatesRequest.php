@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTO\Request;
 
-use App\Infrastructure\Validation\Constraint as AppAssert;
+use App\Application\Validation\Constraint as AppAssert;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -18,7 +18,7 @@ final class GetLast24HoursRatesRequest
 {
     public function __construct(
         #[Assert\NotBlank(message: 'Currency pair is required')]
-        #[\App\Application\Validation\Constraint\SupportedCurrencyPair]
+        #[AppAssert\SupportedCurrencyPair]
         #[OA\Property(
             property: 'pair',
             description: 'Currency pair in format BASE/QUOTE. Only EUR-based pairs are supported.',

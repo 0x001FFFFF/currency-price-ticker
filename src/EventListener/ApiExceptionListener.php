@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\EventListener;
 
 use App\Exception\CurrencyTickerException;
-use App\Exception\BusinessException;
 use App\Exception\RateLimitExceededException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -25,13 +24,12 @@ final class ApiExceptionListener
         $exception = $event->getThrowable();
         $request = $event->getRequest();
 
-        // Only handle API requests
-        if (!\str_starts_with($request->getPathInfo(), '/api/')) {
+        if (!str_starts_with($request->getPathInfo(), '/api/')) {
             return;
         }
 
         $path = $request->getPathInfo();
-        if (\preg_match('#^/api/doc(?:\\.json|\\.yaml|\\.html)?$#', $path)) {
+        if (preg_match('#^/api/doc(?:\.json|\.yaml|\.html)?$#', $path)) {
             return;
         }
 
@@ -45,22 +43,6 @@ final class ApiExceptionListener
     {
         $exception = $exception->getPrevious() ?? $exception;
 
-        // Map Symfony validation failures to 400 Bad Request
-        if ($exception instanceof ValidationFailedException) {
-            $violations = $exception->getViolations();
-            $messages = [];
-            foreach ($violations as $violation) {
-                $messages[] = \sprintf('%s: %s', (string) $violation->getPropertyPath(), (string) $violation->getMessage());
-            }
-
-            return new JsonResponse([
-                'error_code' => 'VALIDATION_ERROR',
-                'message' => \implode("\n", $messages),
-                'status_code' => 400,
-                'timestamp' => (new \DateTime())->format('c')
-            ], 400);
-        }
-
         if ($exception instanceof CurrencyTickerException) {
             $response = new JsonResponse(
                 $exception->toApiResponse(),
@@ -73,6 +55,14 @@ final class ApiExceptionListener
             }
 
             return $response;
+        }
+
+        if ($exception instanceof ValidationFailedException) {
+            return new JsonResponse([
+                'error_code' => 'VALIDATION_ERROR',
+                'message' => $exception->getViolations()->get(0)->getMessage(),
+                'status_code' => 400,
+            ], 400);
         }
 
         if ($exception instanceof HttpExceptionInterface) {
