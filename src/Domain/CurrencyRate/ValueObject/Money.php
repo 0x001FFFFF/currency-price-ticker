@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\CurrencyRate\ValueObject;
 
-/**
- * Money Value Object for handling monetary amounts.
- */
 final readonly class Money
 {
     public function __construct(
@@ -14,6 +11,18 @@ final readonly class Money
         private string $currency = 'EUR'
     ) {
         $this->validate();
+    }
+
+    public static function fromFloat(float $amount, string $currency = 'EUR'): self
+    {
+        return new self($amount, $currency);
+    }
+
+    public static function fromString(string $amount, string $currency = 'EUR'): self
+    {
+        $floatAmount = (float) $amount;
+
+        return new self($floatAmount, $currency);
     }
 
     public function getAmount(): float
@@ -26,19 +35,30 @@ final readonly class Money
         return $this->currency;
     }
 
-    public static function fromString(string $amount, string $currency = 'EUR'): self
+    public function formatForStorage(): string
     {
-        return new self((float) $amount, $currency);
+        return number_format($this->amount, 8, '.', '');
+    }
+
+    public function isGreaterThan(self $other): bool
+    {
+        return $this->amount > $other->amount;
+    }
+
+    public function equals(self $other): bool
+    {
+        return abs($this->amount - $other->amount) < 0.00000001
+            && $this->currency === $other->currency;
     }
 
     private function validate(): void
     {
         if ($this->amount < 0) {
-            throw new \InvalidArgumentException('Amount cannot be negative');
+            throw new \InvalidArgumentException('Money amount cannot be negative');
         }
 
         if (empty($this->currency)) {
-            throw new \InvalidArgumentException('Currency is required');
+            throw new \InvalidArgumentException('Currency cannot be empty');
         }
     }
 }

@@ -66,6 +66,29 @@ final class CurrencyRateCacheService
         }
     }
 
+    public function invalidateForPair(string $pair): void
+    {
+        try {
+            // Generate possible cache keys for this pair
+            $patterns = [
+                $this->generateCacheKey($pair, 'last24h'),
+                $this->generateCacheKey($pair, 'daily', date('Y-m-d')),
+                $this->generateCacheKey($pair, 'daily', date('Y-m-d', strtotime('-1 day'))),
+            ];
+
+            foreach ($patterns as $cacheKey) {
+                $this->cache->deleteItem(self::CACHE_PREFIX . $cacheKey);
+            }
+
+            $this->logger->debug('Cache invalidated for pair', ['pair' => $pair]);
+        } catch (\Throwable $e) {
+            $this->logger->warning('Cache invalidation failed', [
+                'pair' => $pair,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     public function generateCacheKey(string $pair, string $period, ?string $date = null): string
     {
         $keyParts = [$pair, $period];

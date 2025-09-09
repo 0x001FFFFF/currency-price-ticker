@@ -30,8 +30,11 @@ class ExceptionHandlingTest extends CurrencyRateControllerTest
         ];
 
         foreach ($sensitiveTerms as $term) {
-            $this->assertStringNotContainsStringIgnoringCase($term, $response,
-                "Response should not contain sensitive information: '$term'");
+            $this->assertStringNotContainsStringIgnoringCase(
+                $term,
+                $response,
+                "Response should not contain sensitive information: '$term'"
+            );
         }
     }
     private function assertValidErrorStructure(array $data): void
@@ -94,8 +97,11 @@ class ExceptionHandlingTest extends CurrencyRateControllerTest
         foreach ($testCases as $testCase) {
             $response = $this->makeApiRequest('GET', $testCase['uri']);
 
-            $this->assertSame(400, $response->getStatusCode(),
-                "Should return 400 for: " . $testCase['description']);
+            $this->assertSame(
+                400,
+                $response->getStatusCode(),
+                "Should return 400 for: " . $testCase['description']
+            );
             $data = $this->getJsonResponseData($response);
             // Verify no sensitive information is leaked
             $this->assertNoSensitiveInformation($data);
@@ -117,8 +123,11 @@ class ExceptionHandlingTest extends CurrencyRateControllerTest
             foreach ($disallowedMethods as $method) {
                 $response = $this->makeApiRequest($method, $endpoint);
 
-                $this->assertSame(405, $response->getStatusCode(),
-                    "Should return 405 for $method on $endpoint");
+                $this->assertSame(
+                    405,
+                    $response->getStatusCode(),
+                    "Should return 405 for $method on $endpoint"
+                );
 
                 self::assertResponseHeaderSame('Content-Type', 'application/json');
                 $data = $this->getJsonResponseData($response);
@@ -142,6 +151,7 @@ class ExceptionHandlingTest extends CurrencyRateControllerTest
 
             if ($response->getStatusCode() === 429) {
                 $rateLimitResponse = $response;
+
                 break;
             }
         }

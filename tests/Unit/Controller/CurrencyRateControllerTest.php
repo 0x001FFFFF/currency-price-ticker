@@ -125,6 +125,7 @@ class CurrencyRateControllerTest extends WebTestCase
     protected function makeApiRequest(string $method, string $uri): Response
     {
         $this->client->request($method, $uri);
+
         return $this->client->getResponse();
     }
 
