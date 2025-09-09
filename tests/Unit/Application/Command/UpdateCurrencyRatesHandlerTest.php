@@ -28,7 +28,6 @@ final class UpdateCurrencyRatesHandlerTest extends TestCase
 
     public function testHandleUpdateAllRatesCommand(): void
     {
-        // Arrange
         $command = new UpdateCurrencyRatesCommand();
         $expectedResult = new UpdateResult();
         $expectedResult->addSuccess('EUR/BTC');
@@ -39,18 +38,13 @@ final class UpdateCurrencyRatesHandlerTest extends TestCase
             ->method('updateAllRates')
             ->with(false)
             ->willReturn($expectedResult);
-
-        // Act
         $result = $this->handler->__invoke($command);
-
-        // Assert
         $this->assertEquals($expectedResult, $result);
         $this->assertEquals(2, $result->getSuccessCount());
     }
 
     public function testHandleUpdateSpecificPairsCommand(): void
     {
-        // Arrange
         $specificPairs = ['EUR/BTC'];
         $command = new UpdateCurrencyRatesCommand(true, $specificPairs);
         $expectedResult = new UpdateResult();
@@ -61,10 +55,7 @@ final class UpdateCurrencyRatesHandlerTest extends TestCase
             ->with($specificPairs, true)
             ->willReturn($expectedResult);
 
-        // Act
         $result = $this->handler->__invoke($command);
-
-        // Assert
         $this->assertEquals($expectedResult, $result);
     }
 }
