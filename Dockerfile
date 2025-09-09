@@ -1,5 +1,12 @@
 FROM php:8.3-fpm-alpine AS base
 
+ENV SUPERCRONIC_VERSION v0.2.29
+
+RUN apk add --no-cache wget && \
+    wget -q "https://github.com/aptible/supercronic/releases/download/${SUPERCRONIC_VERSION}/supercronic-linux-amd64" -O /usr/local/bin/supercronic && \
+    chmod +x /usr/local/bin/supercronic && \
+    apk del wget
+
 RUN apk add --no-cache \
     git \
     curl \
@@ -10,11 +17,13 @@ RUN apk add --no-cache \
     icu-dev \
     oniguruma-dev \
     libxml2-dev \
-    mysql-client \
+    mariadb-client \
     autoconf \
     g++ \
     make \
     && rm -rf /var/cache/apk/*
+
+COPY docker/php/cronjobs /etc/crontabs/root
 
 RUN docker-php-ext-install \
     pdo_mysql \
@@ -40,6 +49,7 @@ RUN addgroup -g 1000 -S www && \
     adduser -u 1000 -S www -G www
 
 WORKDIR /var/www/html
+
 RUN mkdir -p var/cache var/log && \
     chown -R www:www /var/www/html
 

@@ -81,39 +81,41 @@ services:
       - currency-network
 
   scheduler:
-    build:
-      context: .
-      target: development
-      dockerfile: Dockerfile
-    container_name: currency-ticker-scheduler
-    restart: unless-stopped
-    volumes:
-      - ./src:/var/www/html/src:cached
-      - ./bin:/var/www/html/bin:cached
-      - ./config:/var/www/html/config:cached
-      - ./migrations:/var/www/html/migrations:cached
-      - ./.env:/var/www/html/.env:cached
-      - ./.env.dev:/var/www/html/.env.dev:cached
-      - ./.env.test:/var/www/html/.env.test:cached
-      - ./phpstan.neon:/var/www/html/phpstan.neon:cached
-      - ./.php-cs-fixer.php:/var/www/html/.php-cs-fixer.php:cached
-      - ./var/log:/var/www/html/var/log
-      - ./var/cache:/var/www/html/var/cache
-    environment:
-      - APP_ENV=dev
-      - DATABASE_URL=mysql://currency_user:currency_pass@db:3306/currency_ticker?serverVersion=8.0
-      - REDIS_URL=redis://redis:6379
-      - MESSENGER_TRANSPORT_DSN=redis://redis:6379/messages
-      - SENTRY_DSN=https://f242760c1ec9dc937c51cb7eb1f55739@o4509978677149696.ingest.de.sentry.io/4509978681147472
-      - PHP_IDE_CONFIG=serverName=currency-ticker-app
-    depends_on:
-      - db
-      - redis
-    command: sh -c "sleep 10 && php bin/console messenger:consume async --time-limit=60 --memory-limit=128M --sleep=1"
-    networks:
-      - currency-network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      build:
+          context: .
+          target: development
+          dockerfile: Dockerfile
+      container_name: currency-ticker-scheduler
+      restart: unless-stopped
+      volumes:
+          - ./src:/var/www/html/src:cached
+          - ./bin:/var/www/html/bin:cached
+          - ./config:/var/www/html/config:cached
+          - ./migrations:/var/www/html/migrations:cached
+          - ./.env:/var/www/html/.env:cached
+          - ./.env.dev:/var/www/html/.env.dev:cached
+          - ./.env.test:/var/www/html/.env.test:cached
+          - ./phpstan.neon:/var/www/html/phpstan.neon:cached
+          - ./.php-cs-fixer.php:/var/www/html/.php-cs-fixer.php:cached
+          - ./var/log:/var/www/html/var/log
+          - ./var/cache:/var/www/html/var/cache
+      environment:
+          - APP_ENV=dev
+          - DATABASE_URL=mysql://currency_user:currency_pass@db:3306/currency_ticker?serverVersion=8.0
+          - REDIS_URL=redis://redis:6379
+          - MESSENGER_TRANSPORT_DSN=redis://redis:6379/messages
+          - SENTRY_DSN=https://f242760c1ec9dc937c51cb7eb1f55739@o4509978677149696.ingest.de.sentry.io/4509978681147472
+          - PHP_IDE_CONFIG=serverName=currency-ticker-app
+      depends_on:
+          - db
+          - redis
+      user: root
+      entrypoint: ""
+      command: ["/usr/local/bin/supercronic", "/etc/crontabs/root" ]
+      networks:
+          - currency-network
+      extra_hosts:
+          - "host.docker.internal:host-gateway"
 
 volumes:
   db_data_price_ticker:

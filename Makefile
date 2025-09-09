@@ -21,8 +21,9 @@ help:
 
 up:
 	@echo "🚀 Starting up the development environment..."
-	docker compose up -d --build 
-	
+	docker compose up -d --build
+	sleep 3
+	docker compose exec app php bin/console doctrine:migrations:migrate --no-interaction
 
 down:
 	@echo "🛑 Shutting down the development environment..."
@@ -53,15 +54,7 @@ test:
 
 stan:
 	@echo "🔬 Running PHPStan analysis..."
-	docker compose exec app vendor/bin/phpstan analyse
-
-cs-fix:
-	@echo "🎨 Fixing code style with PHP-CS-Fixer..."
-	docker compose exec app vendor/bin/php-cs-fixer fix
-
-cs-fix:
-	@echo "🎨 Fixing code style with PHP-CS-Fixer..."
-	docker compose exec app vendor/bin/php-cs-fixer fix
+	docker compose exec app vendor/bin/phpstan analyse src
 
 cs-fix:
 	@echo "🎨 Fixing code style with PHP-CS-Fixer..."
