@@ -36,16 +36,6 @@ final class CurrencyPairTest extends TestCase
         new CurrencyPair('EU', 'BTC');
     }
 
-    /**
-     * @dataProvider validPairsProvider
-     */
-    public function testAllSupportedPairsAreValid(string $base, string $quote, string $expectedSymbol): void
-    {
-        $pair = new CurrencyPair($base, $quote);
-
-        $this->assertEquals($expectedSymbol, $pair->toBinanceSymbol());
-    }
-
     public function testEquals(): void
     {
         $pair1 = new CurrencyPair('EUR', 'BTC');
@@ -56,12 +46,17 @@ final class CurrencyPairTest extends TestCase
         $this->assertFalse($pair1->equals($pair3));
     }
 
-    public static function validPairsProvider(): array
+    public function testAllSupportedPairsAreValid(): void
     {
-        return [
+        $testCases = [
             ['EUR', 'BTC', 'BTCEUR'],
             ['EUR', 'ETH', 'ETHEUR'],
             ['EUR', 'LTC', 'LTCEUR'],
         ];
+
+        foreach ($testCases as [$base, $quote, $expectedSymbol]) {
+            $pair = new CurrencyPair($base, $quote);
+            $this->assertEquals($expectedSymbol, $pair->toBinanceSymbol());
+        }
     }
 }

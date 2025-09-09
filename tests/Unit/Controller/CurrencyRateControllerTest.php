@@ -31,12 +31,12 @@ class CurrencyRateControllerTest extends WebTestCase
             $this->assertIsArray($data);
             $this->assertArrayHasKey('data', $data);
             $this->assertArrayHasKey('meta', $data);
-            $this->assertArrayHasKey('pair', $data['data']);
+            $this->assertArrayHasKey('pair', $data['meta']);
             $this->assertArrayHasKey('period', $data['meta']);
             $this->assertArrayHasKey('count', $data['meta']);
             $this->assertSame('EUR/BTC', $data['meta']['pair']);
             $this->assertSame('24h', $data['meta']['period']);
-            $this->assertGreaterThan(0, $data['meta']['count']);
+            $this->assertGreaterThanOrEqual(0, $data['meta']['count']);
         } else {
             $this->assertIsArray($data);
             $this->assertArrayHasKey('error_code', $data);

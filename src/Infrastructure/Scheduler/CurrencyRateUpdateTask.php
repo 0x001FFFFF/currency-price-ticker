@@ -34,8 +34,6 @@ final class CurrencyRateUpdateTask
                 'error' => $exception->getMessage(),
                 'trace' => $exception->getTraceAsString(),
             ]);
-
-            // Don't re-throw to prevent scheduler from stopping
         }
     }
 }

@@ -2,9 +2,9 @@ framework:
     rate_limiter:
         api_requests:
             policy: 'sliding_window'
-            limit: 1000
+            limit: 100 # Very high limit for tests
             interval: '1 minute'
         api_burst:
             policy: 'fixed_window'
-            limit: 1000
+            limit: 10   # Very high limit for tests
             interval: '10 seconds'
