@@ -250,6 +250,35 @@ Retrieves cryptocurrency exchange rates for a specific date.
 curl -X GET "http://localhost:8080/api/rates/day?pair=EUR/BTC&date=2025-09-07" \
   -H "Accept: application/json"
 ```
+**Example Response:**
+```json
+{
+    "data": [
+        {
+            "pair": "EUR/BTC",
+            "rate": 95150.86,
+            "timestamp": "2025-09-09T21:30:37+00:00"
+        },
+        {
+            "pair": "EUR/BTC",
+            "rate": 95209.96,
+            "timestamp": "2025-09-09T22:20:00+00:00"
+        },
+        {
+            "pair": "EUR/BTC",
+            "rate": 95155.13,
+            "timestamp": "2025-09-09T22:25:01+00:00"
+        }
+    ],
+    "meta": {
+        "pair": "EUR/BTC",
+        "period": "day",
+        "count": 3,
+        "start_time": "2025-09-09T21:30:37+00:00",
+        "end_time": "2025-09-09T22:45:00+00:00"
+    }
+}
+```
 
 ### Rate Limiting
 
