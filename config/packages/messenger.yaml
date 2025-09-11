@@ -8,12 +8,10 @@ framework:
             async: '%env(MESSENGER_TRANSPORT_DSN)%'
             failed: 'doctrine://default?queue_name=failed'
             sync: 'sync://'
-            #scheduler_currency_updates: '%env(MESSENGER_TRANSPORT_DSN)%'
 
         routing:
             # Route your messages to the transports
             # 'App\Message\YourMessage': async
-            #'App\Application\Command\UpdateCurrencyRatesCommand': async
             'App\Application\Query\GetLast24HoursRatesQuery': sync
             'App\Application\Query\GetDailyRatesQuery': sync
 

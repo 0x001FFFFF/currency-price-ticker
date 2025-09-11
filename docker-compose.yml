@@ -109,9 +109,19 @@ services:
       depends_on:
           - db
           - redis
-      user: root
-      entrypoint: ""
-      command: ["/usr/local/bin/supercronic", "/etc/crontabs/root" ]
+      command: >
+          sh -c "sleep 15 &&
+                 php bin/console messenger:consume scheduler_currency_rate_update_task
+                 --time-limit=60
+                 --memory-limit=256M
+                 --sleep=5
+                 --verbose"
+      healthcheck:
+          test: ["CMD", "php", "bin/console", "debug:scheduler", "currency_rate_update_task"]
+          interval: 60s
+          timeout: 10s
+          retries: 3
+          start_period: 30s
       networks:
           - currency-network
       extra_hosts:
@@ -120,14 +130,6 @@ services:
 volumes:
   db_data_price_ticker:
     driver: local
-#  app_cache:
-#    driver: local
-#  app_logs:
-#    driver: local
-#  scheduler_cache:
-#    driver: local
-#  scheduler_logs:
-#    driver: local
 
 
 networks:
