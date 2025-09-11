@@ -59,4 +59,3 @@ services:
         arguments:
             $supportedPairs: '%app.supported_currency_pairs%'
         tags: [ 'validator.constraint_validator' ]
-
